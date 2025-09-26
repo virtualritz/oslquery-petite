@@ -1,0 +1,14 @@
+OpenShadingLanguage 1.00
+# Compiled by oslc 1.11.3
+# options: 
+surface metadata	%meta{string,description,"everything is awesome"} 
+param	int	myparam1	1		%meta{int,i,0} %meta{float,f,1} %meta{string,s,"foo"}  %read{2147483647,-1} %write{2147483647,-1}
+param	int	myparam2	2		%meta{string[2],s,"foo","bar"}  %read{2147483647,-1} %write{2147483647,-1}
+param	int	myparam3	3		%meta{float[2],minmax,42,44}  %read{2147483647,-1} %write{2147483647,-1}
+param	int	myparam4	4		%meta{color,c,1,2,3}  %read{2147483647,-1} %write{2147483647,-1}
+param	int	myparam5	5		%meta{string,s,"I have\n\"Escape\"\tsequences\n"}  %read{2147483647,-1} %write{2147483647,-1}
+local	string	ss	%read{2147483647,-1} %write{0,0}
+const	string	$const1	"I have\n\"Escape\"\tsequences\n"		%read{0,0} %write{2147483647,-1}
+code ___main___
+	assign		ss $const1 	%filename{"testsuite/oslinfo-metadata/metadata.osl"} %line{15} %argrw{"wr"}
+	end

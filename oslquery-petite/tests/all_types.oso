@@ -1,0 +1,13 @@
+OpenShadingLanguage 1.11
+shader "alltypes"
+param	point[2]	points	0 1 2 3 4 5
+param	vector[2]	vectors	1 0 0 0 1 0
+param	normal[2]	normals	0 0 1 1 0 0
+param	color[3]	colors	1 0 0 0 1 0 0 0 1
+param	matrix[2]	matrices	1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 2 0 0 0 0 2 0 0 0 0 2 0 0 0 0 2
+param	float[4]	floats	1.0 2.0 3.0 4.0
+param	int[3]	ints	10 20 30
+param	point	single_point	5 5 5
+param	color	single_color	0.5 0.5 0.5
+param	matrix	single_matrix	1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
+end

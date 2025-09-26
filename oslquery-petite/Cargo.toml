@@ -1,0 +1,27 @@
+[package]
+name = "oslquery-petite"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Query Open Shading Language (OSL) shader parameters & metadata"
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = []
+json = ["serde", "serde_json"]
+hash = []
+
+[dependencies]
+ariadne = { workspace = true }
+nom = { workspace = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+thiserror = { workspace = true }
+ustr = { workspace = true }
+
+[dev-dependencies]
+criterion = "0.7"
+pretty_assertions = "1.4"

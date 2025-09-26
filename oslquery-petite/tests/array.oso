@@ -1,0 +1,8 @@
+OpenShadingLanguage 1.11
+shader "arraytest"
+param	float[3]	myarray	1 2 3
+param	string	name	"hello"
+param	int	count	5
+oparam	color	result	0 0 0
+oparam	result
+end

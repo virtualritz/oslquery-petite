@@ -1,0 +1,30 @@
+[package]
+name = "oslq"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Command-line tool for querying Open Shading Language (OSL) shader parameters & metadata"
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.tar.gz"
+bin-dir = "{ bin }{ binary-ext }"
+
+[[bin]]
+name = "oslq"
+path = "src/main.rs"
+
+[features]
+default = ["json"]
+json = ["serde", "serde_json", "oslquery-petite/json"]
+
+[dependencies]
+clap = { workspace = true }
+oslquery-petite = { workspace = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+yansi = { workspace = true }

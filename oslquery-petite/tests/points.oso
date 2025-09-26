@@ -1,0 +1,10 @@
+OpenShadingLanguage 1.11
+shader "pointtest"
+param	point[2]	positions	0 1 2 3 4 5
+param	point	origin	0 0 0
+param	vector	direction	1 0 0
+param	normal	surface_normal	0 0 1
+param	matrix	transform	1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
+param	color[3]	palette	1 0 0 0 1 0 0 0 1
+oparam	color	result	0 0 0
+end

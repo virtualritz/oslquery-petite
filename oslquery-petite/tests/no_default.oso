@@ -1,0 +1,6 @@
+OpenShadingLanguage 1.11
+shader "test_nodefault"
+param	float	with_default	1.5
+oparam	closure color	outColor
+param	string	name	"test"
+end

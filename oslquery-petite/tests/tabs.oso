@@ -1,0 +1,4 @@
+OpenShadingLanguage 1.00
+shader dlConstant
+param	int	coating_on	0	%meta{string,page,"Coating"}
+code ___main___

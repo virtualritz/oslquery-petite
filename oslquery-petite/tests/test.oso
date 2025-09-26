@@ -1,0 +1,6 @@
+OpenShadingLanguage 1.00
+# Compiled by oslc 1.11.3
+shader dlConstant
+param	color	i_color	1 1 1
+param	float	intensity	1
+code ___main___
