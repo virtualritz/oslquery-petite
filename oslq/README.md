@@ -1,5 +1,8 @@
 # oslq
 
+[![Crates.io](https://img.shields.io/crates/v/oslq.svg)](https://crates.io/crates/oslq)
+[![Docs.rs](https://docs.rs/oslq/badge.svg)](https://docs.rs/oslq)
+
 A command-line tool for querying OSL (Open Shading Language) shader parameters & metadata.
 
 ## Installation

@@ -1,5 +1,8 @@
 # `oslquery-petite`
 
+[![Crates.io](https://img.shields.io/crates/v/oslquery-petite.svg)](https://crates.io/crates/oslquery-petite)
+[![Docs.rs](https://docs.rs/oslquery-petite/badge.svg)](https://docs.rs/oslquery-petite)
+
 A lightweight Rust crate for parsing and querying OSL (Open Shading Language) shader parameters & metadata from compiled `.oso` files.
 Aims to match OSL's `liboslquery` in the feature subset it implements 1:1.
 

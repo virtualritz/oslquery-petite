@@ -1,4 +1,4 @@
-# OSLQuery Workspace
+# `oslquery-petite`
 
 Rust implementation for querying [Open Shading Language](https://github.com/AcademySoftwareFoundation/OpenShadingLanguage) (OSL) compiled shader metadata.
 
@@ -10,11 +10,10 @@ This workspace contains two crates:
 
 The main library for parsing and querying OSL `.oso` files. Provides:
 
-- Pure Rust parser for OSO format (no C++ dependencies)
-- Type-safe API where parameter types and values are unified
-- Support for all OSL types (int, float, color, point, vector, normal, matrix, arrays, closures)
-- Metadata extraction
-- Zero-copy string handling
+- Pure Rust parser for OSO format (no C++ dependencies).
+- Type-safe API where parameter types and values are unified.
+- Support for all OSL types (int, float, color, point, vector, normal, matrix, arrays, closures).
+- Metadata extraction.
 
 [Full documentation →](./oslquery-petite/README.md)
 
@@ -68,6 +67,7 @@ for param in query.params() {
 ## Installation
 
 For the command-line tool:
+
 ```bash
 cargo install --path oslq
 ```
