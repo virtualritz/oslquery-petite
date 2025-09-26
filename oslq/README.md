@@ -1,4 +1,4 @@
-# oslq
+# `oslq` – A Petite `oslinfo` Clone
 
 [![Crates.io](https://img.shields.io/crates/v/oslq.svg)](https://crates.io/crates/oslq)
 [![Docs.rs](https://docs.rs/oslq/badge.svg)](https://docs.rs/oslq)
@@ -14,17 +14,26 @@ cargo install oslq
 ## Usage
 
 ```bash
-# Query shader parameters
+# Query a shader.
 oslq shader.oso
 
-# Verbose output
+# Query multiple shaders.
+oslq shader1.oso shader2.oso
+
+# Query specific parameter.
+oslq --param Kd shader.oso
+
+# Use search path.
+oslq -p /path/to/shaders:./local shader
+
+# Verbose output.
 oslq -v shader.oso
 
-# Query specific parameter
-oslq --param paramname shader.oso
-
-# JSON output (if built with json feature)
+# JSON output (requires json feature).
 oslq --json shader.oso
+
+# Benchmark parsing.
+oslq --runstats shader.oso
 ```
 
 ## Features

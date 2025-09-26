@@ -30,13 +30,13 @@ With optional features:
 
 ```toml
 [dependencies]
-oslquery-petite = { version = "0.1", features = ["cli", "json", "hash"] }
+oslquery-petite = { version = "0.1", features = ["json", "hash"] }
 ```
 
-### Features
+### `cargo` Features
 
-- `json` - Enables JSON serialization support.
-- `hash` - Derives `Hash` for all public types.
+- `json` – Enables JSON serialization support.
+- `hash` – Derives `Hash` for all public types.
 
 ## Quick Start
 
@@ -164,31 +164,6 @@ pub enum TypedParameter {
 }
 ```
 
-## `oslq` – A Petite `oslinfo` Clone
-
-```bash
-# Query a shader.
-oslq shader.oso
-
-# Query multiple shaders/
-oslq shader1.oso shader2.oso
-
-# Query specific parameter.
-oslq --param Kd shader.oso
-
-# Use search path.
-oslq -p /path/to/shaders:./local shader
-
-# Verbose output.
-oslq -v shader.oso
-
-# JSON output (requires json feature).
-oslq --json shader.oso
-
-# Benchmark parsing.
-oslq --runstats shader.oso
-```
-
 ## Examples
 
 ### Parsing with Shader Search Path
@@ -223,7 +198,7 @@ for param in query.params() {
 }
 ```
 
-### Arrays Handling
+### Array Handling
 
 ```rust
 for param in query.params() {
