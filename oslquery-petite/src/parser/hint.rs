@@ -26,27 +26,102 @@ pub(super) fn parse_metadata_hint(input: &str) -> IResult<&str, ParsedParameter>
     Ok((rest, meta))
 }
 
-/// Parse metadata content: "type name value" or "type,name,value"
+/// Parse metadata content: "type name value" or "type,name,value,value,..."
+///
+/// An array metadata carries one field per element, so everything after the
+/// name is a value: `string[2],tags,"surface","hidden"` has two of them.
 fn parse_metadata_content(input: &str) -> Result<ParsedParameter, String> {
     // Try comma-separated format first
-    if input.contains(',') {
-        let parts: Vec<&str> = input.split(',').map(|s| s.trim()).collect();
-        if parts.len() >= 3 {
-            // Strip quotes from the value if present
-            let value = parts[2..].join(",");
-            let value = value.trim().trim_matches('"');
-            return parse_metadata_parts(parts[0], parts[1], value);
-        }
+    let fields = split_outside_quotes(input);
+    if fields.len() >= 3 {
+        let values: Vec<String> = fields[2..].iter().map(|field| unquote(field)).collect();
+        return parse_metadata_parts(fields[0].trim(), fields[1].trim(), &values);
     }
 
     // Try space-separated format with quoted values
     let parts = parse_quoted_parts(input);
 
     match parts.len() {
-        n if n >= 3 => parse_metadata_parts(&parts[0], &parts[1], &parts[2..].join(" ")),
-        2 => parse_metadata_parts("string", &parts[0], &parts[1]),
+        n if n >= 3 => parse_metadata_parts(&parts[0], &parts[1], &[parts[2..].join(" ")]),
+        2 => parse_metadata_parts("string", &parts[0], &[parts[1].clone()]),
         _ => Err("Invalid metadata format".to_string()),
     }
+}
+
+/// Split on the commas that sit outside of quotes, leaving quotes in place.
+///
+/// A comma inside a quoted string is part of the value, not a separator.
+fn split_outside_quotes(input: &str) -> Vec<&str> {
+    let mut fields = Vec::new();
+    let mut start = 0;
+    let mut in_quotes = false;
+    let mut escape_next = false;
+
+    for (index, character) in input.char_indices() {
+        if escape_next {
+            escape_next = false;
+            continue;
+        }
+
+        match character {
+            '\\' if in_quotes => escape_next = true,
+            '"' => in_quotes = !in_quotes,
+            ',' if !in_quotes => {
+                fields.push(&input[start..index]);
+                start = index + 1;
+            }
+            _ => {}
+        }
+    }
+    fields.push(&input[start..]);
+
+    fields
+}
+
+/// Strip the surrounding quotes of a field, resolving backslash escapes.
+///
+/// An unquoted field is returned trimmed and otherwise verbatim.
+fn unquote(field: &str) -> String {
+    let field = field.trim();
+
+    let Some(inner) = field
+        .strip_prefix('"')
+        .and_then(|rest| rest.strip_suffix('"'))
+    else {
+        return field.to_string();
+    };
+
+    let mut unescaped = String::with_capacity(inner.len());
+    let mut characters = inner.chars();
+    while let Some(character) = characters.next() {
+        if character == '\\' {
+            unescaped.push(characters.next().unwrap_or('\\'));
+        } else {
+            unescaped.push(character);
+        }
+    }
+
+    unescaped
+}
+
+/// Split a metadata type such as `string[2]` into base type and array length.
+///
+/// A non-array type has length 0, an unsized array `-1`, matching [`TypeDesc`].
+fn parse_metadata_type(type_str: &str) -> (BaseType, i32) {
+    let (base_str, arraylen) = match type_str.split_once('[') {
+        Some((base, length)) => (
+            base,
+            length.trim_end_matches(']').parse::<i32>().unwrap_or(-1),
+        ),
+        None => (type_str, 0),
+    };
+
+    let basetype = base_str
+        .trim()
+        .parse::<BaseType>()
+        .unwrap_or(BaseType::String);
+
+    (basetype, arraylen)
 }
 
 /// Parse space-separated parts handling quoted strings
@@ -104,33 +179,39 @@ fn parse_quoted_parts(input: &str) -> Vec<String> {
 fn parse_metadata_parts(
     type_str: &str,
     name: &str,
-    value: &str,
+    values: &[String],
 ) -> Result<ParsedParameter, String> {
-    let basetype = type_str.parse::<BaseType>().unwrap_or(BaseType::String);
-    let type_desc = TypeDesc::new(basetype);
+    let (basetype, arraylen) = parse_metadata_type(type_str);
+    let type_desc = if arraylen == 0 {
+        TypeDesc::new(basetype)
+    } else {
+        TypeDesc::new_array(basetype, arraylen)
+    };
 
     let mut param = ParsedParameter::new(name, type_desc);
     param.valid_default = true;
 
-    // Parse the value based on type
-    match basetype {
-        BaseType::Int => {
-            if let Ok(val) = value.parse::<i32>() {
-                param.idefault.push(val);
-            } else {
-                param.sdefault.push(value.to_string());
+    // Parse each value based on type
+    for value in values {
+        match basetype {
+            BaseType::Int => {
+                if let Ok(val) = value.parse::<i32>() {
+                    param.idefault.push(val);
+                } else {
+                    param.sdefault.push(value.clone());
+                }
             }
-        }
-        BaseType::Float => {
-            if let Ok(val) = value.parse::<f32>() {
-                param.fdefault.push(val);
-            } else {
-                param.sdefault.push(value.to_string());
+            BaseType::Float => {
+                if let Ok(val) = value.parse::<f32>() {
+                    param.fdefault.push(val);
+                } else {
+                    param.sdefault.push(value.clone());
+                }
             }
-        }
-        _ => {
-            // String or other types - store as string
-            param.sdefault.push(value.to_string());
+            _ => {
+                // String or other types - store as string
+                param.sdefault.push(value.clone());
+            }
         }
     }
 
@@ -256,6 +337,70 @@ mod tests {
         let (_, meta) = parse_metadata_hint(input).unwrap();
         assert_eq!(meta.name.as_str(), "max");
         assert_eq!(meta.idefault[0], 100);
+    }
+
+    #[test]
+    fn test_parse_metadata_string_array() {
+        // A two-element string array must yield two separate values, not one
+        // string with the separator baked into it.
+        let input = "%meta{string[2],tags,\"surface\",\"hidden\"}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.name.as_str(), "tags");
+        assert_eq!(meta.sdefault, vec!["surface", "hidden"]);
+        assert_eq!(meta.type_desc.basetype, BaseType::String);
+        assert_eq!(meta.type_desc.arraylen, 2);
+    }
+
+    #[test]
+    fn test_parse_metadata_single_element_string_array() {
+        // A one-element array keeps yielding exactly what it did before.
+        let input = "%meta{string[1],tags,\"utility\"}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.name.as_str(), "tags");
+        assert_eq!(meta.sdefault, vec!["utility"]);
+    }
+
+    #[test]
+    fn test_parse_metadata_int_array() {
+        let input = "%meta{int[2],range,0,100}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.name.as_str(), "range");
+        assert_eq!(meta.idefault, vec![0, 100]);
+        assert!(meta.sdefault.is_empty());
+    }
+
+    #[test]
+    fn test_parse_metadata_float_array() {
+        let input = "%meta{float[3],slider,0.0,1.0,0.5}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.name.as_str(), "slider");
+        assert_eq!(meta.fdefault, vec![0.0, 1.0, 0.5]);
+        assert!(meta.sdefault.is_empty());
+    }
+
+    #[test]
+    fn test_parse_metadata_comma_inside_quotes() {
+        // The separator only separates outside of quotes.
+        let input = "%meta{string[2],tags,\"one, two\",\"three\"}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.sdefault, vec!["one, two", "three"]);
+
+        // A scalar string with a comma in it stays one value.
+        let input = "%meta{string,help,\"Hello, world\"}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.sdefault, vec!["Hello, world"]);
+    }
+
+    #[test]
+    fn test_parse_metadata_escaped_quote() {
+        let input = "%meta{string,help,\"say \\\"hi\\\"\"}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.name.as_str(), "help");
+        assert_eq!(meta.sdefault, vec!["say \"hi\""]);
+
+        let input = "%meta{string[2],tags,\"a\\\"b\",\"c\"}";
+        let (_, meta) = parse_metadata_hint(input).unwrap();
+        assert_eq!(meta.sdefault, vec!["a\"b", "c"]);
     }
 
     #[test]
