@@ -7,13 +7,14 @@ version = "0.1.1"
 edition = "2024"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>"]
 license = "Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib"
-repository = "https://github.com/AcademySoftwareFoundation/OpenShadingLanguage"
+repository = "https://github.com/virtualritz/oslquery-petite"
 keywords = ["osl", "shading", "graphics", "vfx"]
 categories = ["graphics", "parser-implementations"]
 
 [workspace.dependencies]
 ariadne = "0.5"
 clap = { version = "4.5", features = ["derive"] }
+facet = "0.44"
 nom = "8"
 oslquery-petite = { version = "0.1", path = "oslquery-petite" }
 serde = { version = "1", features = ["derive"] }

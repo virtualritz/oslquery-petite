@@ -83,6 +83,17 @@ impl OslQuery {
         crate::parser::OsoReader::new().parse_string(content)
     }
 
+    /// Parse OSO content from raw bytes, as read straight off disk.
+    ///
+    /// The OSO format is text, so this is [`Self::from_string`] plus a UTF-8
+    /// check; invalid UTF-8 comes back as [`ParseError::InvalidFormat`]
+    /// rather than panicking or lossily replacing the offending bytes.
+    pub fn from_bytes(content: &[u8]) -> Result<Self, ParseError> {
+        let content = std::str::from_utf8(content)
+            .map_err(|error| ParseError::InvalidFormat(format!("invalid UTF-8: {error}")))?;
+        Self::from_string(content)
+    }
+
     // Internal methods for the parser
 
     pub(crate) fn set_shader_info(&mut self, shader_type: &str, shader_name: String) {
@@ -160,10 +171,46 @@ impl Default for OslQuery {
     }
 }
 
+// `TryFrom`, not `From`: parsing OSO content can fail, so an infallible
+// conversion would have to panic or silently produce an empty query.
+impl TryFrom<&str> for OslQuery {
+    type Error = ParseError;
+
+    fn try_from(content: &str) -> Result<Self, Self::Error> {
+        Self::from_string(content)
+    }
+}
+
+impl TryFrom<&[u8]> for OslQuery {
+    type Error = ParseError;
+
+    fn try_from(content: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_bytes(content)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::types::TypedParameter;
+
+    #[test]
+    fn try_from_str_and_bytes_agree_with_from_string() {
+        let oso_content =
+            "OpenShadingLanguage 1.00\nsurface test\nparam float Kd 0.5\ncode ___main___\n";
+
+        let from_str: OslQuery = oso_content.try_into().unwrap();
+        let from_bytes: OslQuery = oso_content.as_bytes().try_into().unwrap();
+        assert_eq!(from_str, OslQuery::from_string(oso_content).unwrap());
+        assert_eq!(from_bytes, from_str);
+    }
+
+    #[test]
+    fn try_from_bytes_rejects_invalid_utf8() {
+        let invalid = [b'p', b'a', b'r', b'a', b'm', 0xff, 0xfe];
+        let result = OslQuery::try_from(&invalid[..]);
+        assert!(matches!(result, Err(ParseError::InvalidFormat(_))));
+    }
 
     #[test]
     fn test_empty_query() {
