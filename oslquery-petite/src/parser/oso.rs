@@ -100,7 +100,13 @@ pub(crate) fn parse_typename(input: &str) -> IResult<&str, BaseType> {
 /// Parse closure type.
 pub(crate) fn parse_closure(input: &str) -> IResult<&str, TypeDesc> {
     preceded((tag("closure"), space1, tag("color")), |input| {
-        let mut type_desc = TypeDesc::new(BaseType::Color);
+        // `BaseType::None`, not `Color`: the `ParsedParameter -> Parameter`
+        // conversion (`types.rs`) matches on `basetype` first and only checks
+        // `is_closure` in the `None` arm -- `Color` here made it fall into the
+        // plain-color arm instead, silently discarding `is_closure` and
+        // collapsing every `closure color` output to a `TypedParameter::Color`
+        // indistinguishable from a genuine `color` output.
+        let mut type_desc = TypeDesc::new(BaseType::None);
         type_desc.is_closure = true;
 
         // Check for array specification

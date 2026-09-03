@@ -204,6 +204,45 @@ code ___main___
         }
     }
 
+    /// A `closure color outColor` output must be reported as
+    /// [`TypedParameter::Closure`], not collapsed to plain `Color` -- and a
+    /// genuine `color outColor` output (same name, no `closure` keyword)
+    /// must still report `Color`. The name is not a reliable signal in real
+    /// shader libraries (3Delight's `dlPrincipled` and `dlFloatToColor` both
+    /// name their output `outColor`, one a closure and one a plain color);
+    /// only the `closure` keyword itself distinguishes them.
+    #[test]
+    fn closure_color_output_is_not_collapsed_to_color() {
+        let closure_oso = r#"
+OpenShadingLanguage 1.00
+shader dlAOVGroup
+oparam	closure color	outColor
+code ___main___
+"#;
+        let query = OslQuery::from_string(closure_oso).unwrap();
+        let output = query.param_by_name("outColor").unwrap();
+        assert!(output.is_output());
+        assert!(
+            matches!(output.typed_param(), TypedParameter::Closure { .. }),
+            "expected Closure, got {:?}",
+            output.typed_param()
+        );
+
+        let plain_color_oso = r#"
+OpenShadingLanguage 1.00
+shader dlFloatToColor
+oparam	color	outColor
+code ___main___
+"#;
+        let query = OslQuery::from_string(plain_color_oso).unwrap();
+        let output = query.param_by_name("outColor").unwrap();
+        assert!(
+            matches!(output.typed_param(), TypedParameter::Color { .. }),
+            "expected Color, got {:?}",
+            output.typed_param()
+        );
+    }
+
     #[test]
     fn test_type_safety() {
         let oso_content = r#"
